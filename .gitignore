@@ -8,3 +8,4 @@ frenchfry/settings_local.py
 build/
 pip-log.txt
 src/
+.ropeproject
