@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>{% block title %}Quite interesting stuff{% endblock title %}</title>
+	<meta charset="utf-8">
+	<!--[if IE]><script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script><![endif]--> 
+	<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/base.css">
+	<link rel='stylesheet' type='text/css' href='http://fonts.googleapis.com/css?family=Oswald&amp;v2'>
+{% block extra_header %}{% endblock extra_header %}
+</head>
+
+<body>
+
+	{% block header %}
+	<header>
+
+		<section>
+			<h1><a href="{% url home %}">French Fry</a></h1>
+		</section>
+
+		<nav>
+			<ul>
+				{% if user.is_superuser %}<li><a href="{% url add_user %}">Add user</a></li>{% endif %}
+				<li class="right">{% if user.is_authenticated %}Hi, {{ user }}. <a href="{% url logout %}">Logout</a>{% else %}<a href="{% url login %}">Login</a>{% endif %}</li>
+			</ul>
+		</nav>
+
+	</header>
+	{% endblock header %}
+
+	{% for message in messages %}
+	<section class="content{% if message.tags %} {{ message.tags }}{% endif %}">
+		{{ message|safe }}
+	</section>
+	{% endfor %}
+
+	{% block content %}{% endblock content %}
+
+	{% block stats %}
+		
+	{% endblock stats %}
+
+	<footer> 
+		<a href="http://pineapple.ksocha.com"><img src="http://p.ksocha.com/static/favicon.ico" alt="pineapple" title="Pineapple"></a>
+	</footer>
+
+</body>
+
+</html>

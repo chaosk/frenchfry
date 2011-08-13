@@ -1,0 +1,10 @@
+*.DS_Store
+*.pyc
+*.sqlite
+*.svn*
+*.tmproj
+*.geany
+frenchfry/settings_local.py
+build/
+pip-log.txt
+src/

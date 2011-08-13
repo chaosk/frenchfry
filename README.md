@@ -1,4 +1,8 @@
-frenchfry - Quite interesting stats
+frenchfry
+===
+Quite interesting stats
+---
+
 Yet another webapp collecting results of Qi games provided by modified Teeworlds client.
 
 
