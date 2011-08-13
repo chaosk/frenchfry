@@ -121,7 +121,7 @@ class GameStats(models.Model):
 
 	@property
 	def has_positive_ratio(self):
-		return True if self.ratio and self.ratio > Decimal(1)
+		return True if self.ratio and self.ratio > Decimal(1) else False
 
 	def __unicode__(self):
 		return u"Stats of {0} v {1} [#{2}]".format(self.player,
