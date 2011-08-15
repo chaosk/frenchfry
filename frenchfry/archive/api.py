@@ -1,3 +1,4 @@
+from django.conf.urls.defaults import url
 from tastypie import fields
 from tastypie.authentication import ApiKeyAuthentication
 from tastypie.authorization import Authorization

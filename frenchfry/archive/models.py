@@ -1,4 +1,5 @@
 from decimal import Decimal
+from datetime import datetime
 from django.contrib.auth.models import User
 from django.db import models
 from django.utils import dateformat
@@ -24,7 +25,7 @@ class Match(models.Model):
 	# during save(), by self.get_our_clan_name()
 	our_clan_name = models.CharField(max_length=2)
 
-	opponent = models.ForeignKey(OpponentClan)
+	opponent = models.ForeignKey('OpponentClan')
 
 	# sum of wins/losses
 	our_result = models.PositiveIntegerField()
@@ -55,7 +56,7 @@ class Match(models.Model):
 
 
 class Game(models.Model):
-	created_at = models.DateTimeField(default=datetime.datetime.now)
+	created_at = models.DateTimeField(default=datetime.now)
 	created_by = models.ForeignKey(User)
 
 	# grouping
@@ -69,11 +70,11 @@ class Game(models.Model):
 	duration = models.PositiveIntegerField() # in seconds
 
 	# lineup
-	opponent = models.ForeignKey(OpponentClan)
+	opponent = models.ForeignKey('OpponentClan')
 	
 	# a list of strings
 	# [u"Player1", u"Player2"]
-	opponent_lineup = PickledObjectField()
+	opponent_lineup = PickledObjectField(editable=True)
 
 	# emulating a list of strings
 	@property
@@ -120,7 +121,7 @@ class Game(models.Model):
 
 
 class GameStat(models.Model):
-	player = models.ForeignKey(Player)
+	player = models.ForeignKey('Player')
 	game = models.ForeignKey(Game, related_name='stats')
 
 	# we store this here anyway, to have a little history
@@ -281,7 +282,7 @@ class ClientDemo(models.Model):
 
 class ClientDemo(models.Model):
 	game = models.ForeignKey(Game, unique=True)
-	sent_by = models.ForeignKey(Server)
+	sent_by = models.ForeignKey('Server')
 
 	def demo_filename(self, filename):
 		del filename
