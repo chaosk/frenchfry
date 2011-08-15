@@ -44,9 +44,9 @@ class Match(models.Model):
 
 	def get_our_clan_name(self):
 		stats = GameStat.objects.filter(game__in=self.games)
-		return UserProfile.CLAN_KA if stats.filter(
-			player__clan=UserProfile.CLAN_KA).count() / \
-			stats.count() >= 0.5 else UserProfile.CLAN_QI
+		return Player.CLAN_KA_DISPLAY if stats.exclude(
+			player__clan=Player.CLAN_QI).count() / \
+			stats.count() >= 0.5 else Player.CLAN_QI_DISPLAY
 
 	def get_game_title(self):
 		return u"{0} vs {1}, {2}, {3}".format(self.get_our_clan_name,
@@ -62,7 +62,7 @@ class Game(models.Model):
 	match = models.ForeignKey(Match, related_name='games', blank=True, null=True)
 
 	# game conditions
-	player_limit = models.PositiveIntegerField() # 2-8
+	player_limit = models.PositiveSmallIntegerField() # 2-8
 	score_limit = models.PositiveIntegerField() # forms: 600, 1000, custom
 	time_limit = models.PositiveIntegerField(default=0) # in minutes, 0 - disabled
 	map = models.CharField(max_length=25)
@@ -90,8 +90,8 @@ class Game(models.Model):
 
 	# unique game ID
 	# sha1(game_start_tick + red_result + blue_result \
-	#  + time.time() + game_end_tick + sum_of_all_players_score)
-	game_id = models.CharField(max_length=32)
+	#  + game_end_tick + sum_of_all_players_score)
+	game_id = models.CharField(max_length=40, unique=True)
 
 	# denormalized
 	RESULT_LOSS = False
@@ -102,10 +102,29 @@ class Game(models.Model):
 	)
 	result = models.BooleanField(choices=RESULT_CHOICES)
 
+	def has_all_stats(self):
+		return True if self.stats.count() == self.player_limit*2 else False
+
+	def has_scoreboard(self):
+		return self.screenshots.filter(
+			screenshot_type=Screenshot.TYPE_SCORE).exists()
+
+	def has_statboard(self):
+		return self.screenshots.filter(
+			screenshot_type=Screenshot.TYPE_STATS).exists()
+
+	def save(self, *args, **kwargs):
+		# create a Match, or try to use existing Match
+		# denormalize stuff
+		super(Game, self).save(*args, **kwargs)
+
 
 class GameStat(models.Model):
 	player = models.ForeignKey(Player)
 	game = models.ForeignKey(Game, related_name='stats')
+
+	# we store this here anyway, to have a little history
+	nickname = models.CharField(max_length=15)
 
 	points = models.IntegerField() # this is denormalized btw
 
@@ -163,10 +182,15 @@ class GameStat(models.Model):
 
 		unique_together = ('game', 'player')
 
+	def save(self, *args, **kwargs):
+		# try to use existing Player, or create a new one
+		# process self.nickname
+		# denormalize stuff
+		super(GameStat, self).save(*args, **kwargs)
+
 	def __unicode__(self):
 		return u"Stats of {0} v {1} [#{2}]".format(self.player,
 			self.game.opponent, self.game.id)
-
 
 
 class OpponentClan(models.Model):
@@ -181,7 +205,20 @@ class Player(models.Model):
 	nickname = models.CharField(max_length=15)
 	user = models.OneToOneField(User, unique=True,
 		related_name='player', blank=True, null=True)
-	
+
+	CLAN_QI = 1
+	CLAN_QI_DISPLAY = "Qi"
+	CLAN_KA = 2
+	CLAN_KA_DISPLAY = "Ka"
+	CLAN_NONE = 3
+	CLAN_NONE_DISPLAY = "-"
+	CLAN_CHOICES = (
+		(CLAN_QI, CLAN_QI_DISPLAY),
+		(CLAN_KA, CLAN_KA_DISPLAY),
+		(CLAN_NONE, CLAN_NONE_DISPLAY) # recruit?
+	)
+	clan = models.IntegerField(max_length=1, choices=CLAN_CHOICES)
+
 	def __unicode__(self):
 		return self.user if self.user else self.nickname
 
@@ -192,7 +229,7 @@ class AdditionalNickname(models.Model):
 
 
 class Screenshot(models.Model):
-	game = models.ForeignKey(Game)
+	game = models.ForeignKey(Game, 'screenshots')
 	sent_by = models.ForeignKey(User)
 	
 	TYPE_SCORE = 1
@@ -257,3 +294,8 @@ class ClientDemo(models.Model):
 
 	def get_absolute_url(self):
 		return self.demo_file.url
+
+
+class Server(models.Model):
+	name = models.CharField(max_length=50)
+	# api key?
