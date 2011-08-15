@@ -1,7 +1,8 @@
 from decimal import Decimal
-from datetime import datetime
+from datetime import datetime, timedelta
 from django.contrib.auth.models import User
 from django.db import models
+from django.db.models import F
 from django.utils import dateformat
 from picklefield.fields import PickledObjectField
 
@@ -13,6 +14,8 @@ o=' I II III IV V VI VII VIII IX'.split(' ')
 
 
 class Match(models.Model):
+	created_at = models.DateTimeField(default=datetime.now)
+
 	"""Groups games into game sessions"""
 	notes = models.CharField(max_length=255)
 
@@ -22,10 +25,13 @@ class Match(models.Model):
 	time_limit = models.PositiveIntegerField(default=0)
 	map = models.CharField(max_length=25)
 
-	# during save(), by self.get_our_clan_name()
-	our_clan_name = models.CharField(max_length=2)
+	# during Game().save(), by self.set_our_clan_name()
+	our_clan_name = models.IntegerField(max_length=1)
 
 	opponent = models.ForeignKey('OpponentClan')
+
+	# moderation
+	is_verified = models.BooleanField(default=False)
 
 	# sum of wins/losses
 	our_result = models.PositiveIntegerField()
@@ -49,10 +55,22 @@ class Match(models.Model):
 			player__clan=Player.CLAN_QI).count() / \
 			stats.count() >= 0.5 else Player.CLAN_QI_DISPLAY
 
+	def set_our_clan_name(self):
+		return self.get_our_clan_name()
+
 	def get_game_title(self):
-		return u"{0} vs {1}, {2}, {3}".format(self.get_our_clan_name,
+		return u"{0} vs {1}, {2}, {3}".format(self.our_clan_name,
 			self.opponent.tag, self.get_score_limit, self.get_result_string)
 
+	def refresh_results(self, commit=True):
+		self.our_result = self.games.filter(result=Game.RESULT_WIN).count()
+		self.opponent_result = self.games.filter(result=Game.RESULT_LOSS).count()
+		if commit:
+			self.save()
+
+	def save(self, *args, **kwargs):
+		self.refresh_results(commit=False)
+		super(Match, self).save(*args, **kwargs)
 
 
 class Game(models.Model):
@@ -95,16 +113,18 @@ class Game(models.Model):
 	game_id = models.CharField(max_length=40, unique=True)
 
 	# denormalized
-	RESULT_LOSS = False
-	RESULT_WIN = True
+	RESULT_LOSS = -1
+	RESULT_DRAW = 0
+	RESULT_WIN = 1
 	RESULT_CHOICES = (
 		(RESULT_LOSS, "Loss"),
+		(RESULT_DRAW, "Draw"),
 		(RESULT_WIN, "Win"),
 	)
-	result = models.BooleanField(choices=RESULT_CHOICES)
+	result = models.SmallIntegerField(max_length=1, choices=RESULT_CHOICES)
 
 	def has_all_stats(self):
-		return True if self.stats.count() == self.player_limit*2 else False
+		return self.stats.count() == self.player_limit*2
 
 	def has_scoreboard(self):
 		return self.screenshots.filter(
@@ -114,10 +134,34 @@ class Game(models.Model):
 		return self.screenshots.filter(
 			screenshot_type=Screenshot.TYPE_STATS).exists()
 
-	def save(self, *args, **kwargs):
-		# create a Match, or try to use existing Match
-		# denormalize stuff
+	def save(self, *args, **kwargs):		
+		# lookup matches from last 24 hours
+		matches = Match.objects.filter(
+			player_limit=self.player_limit,
+			score_limit=self.score_limit,
+			time_limit=self.time_limit,
+			map=self.map,
+			opponent=self.opponent,
+			created_at__gte=F('created_at') - timedelta(days=1)
+		)
+		if not matches:
+			self.match = Match.objects.create(
+				player_limit=self.player_limit,
+				score_limit=self.score_limit,
+				time_limit=self.time_limit,
+				map=self.map,
+				opponent=self.opponent,
+			)
+		else:
+			self.match = matches[0]
+		
+
+		# denormalization
+		self.result = Game.RESULT_WIN \
+			if self.our_result > self.opponent_result else Game.RESULT_DRAW \
+			if self.our_result == self.opponent_result else Game.RESULT_LOSS
 		super(Game, self).save(*args, **kwargs)
+		self.match.set_our_clan_name()
 
 
 class GameStat(models.Model):
@@ -177,16 +221,29 @@ class GameStat(models.Model):
 
 	@property
 	def has_positive_ratio(self):
-		return True if self.ratio and self.ratio > Decimal(1) else False
+		return self.ratio and self.ratio > Decimal(1)
 
 	class Meta:
 
 		unique_together = ('game', 'player')
 
 	def save(self, *args, **kwargs):
-		# try to use existing Player, or create a new one
-		# process self.nickname
-		# denormalize stuff
+		# setting the player if we have an exact match
+		# it can be changed later by reviewer
+		try:
+			self.player = Player.objects.get(nickname=self.nickname)
+		except Player.DoesNotExist:
+			pass
+
+		# denormalization
+		if self.game.duration != 0:
+			self.kills_per_minute = self.kills / self.game.duration
+		else:
+			self.kills_per_minute = 0
+
+		self.net_score = self.kills - self.deaths
+		self.ratio = self.kills / self.deaths if self.deaths != 0 else None
+
 		super(GameStat, self).save(*args, **kwargs)
 
 	def __unicode__(self):
@@ -194,43 +251,8 @@ class GameStat(models.Model):
 			self.game.opponent, self.game.id)
 
 
-class OpponentClan(models.Model):
-	tag = models.CharField(max_length=11)
-	full_name = models.CharField(max_length=50)
-
-	def __unicode__(self):
-		return self.full_name
-
-
-class Player(models.Model):
-	nickname = models.CharField(max_length=15)
-	user = models.OneToOneField(User, unique=True,
-		related_name='player', blank=True, null=True)
-
-	CLAN_QI = 1
-	CLAN_QI_DISPLAY = "Qi"
-	CLAN_KA = 2
-	CLAN_KA_DISPLAY = "Ka"
-	CLAN_NONE = 3
-	CLAN_NONE_DISPLAY = "-"
-	CLAN_CHOICES = (
-		(CLAN_QI, CLAN_QI_DISPLAY),
-		(CLAN_KA, CLAN_KA_DISPLAY),
-		(CLAN_NONE, CLAN_NONE_DISPLAY) # recruit?
-	)
-	clan = models.IntegerField(max_length=1, choices=CLAN_CHOICES)
-
-	def __unicode__(self):
-		return self.user if self.user else self.nickname
-
-
-class AdditionalNickname(models.Model):
-	nickname = models.CharField(max_length=15)
-	player = models.ForeignKey(Player, related_name='additional_nicks')
-
-
 class Screenshot(models.Model):
-	game = models.ForeignKey(Game, 'screenshots')
+	game = models.ForeignKey(Game, related_name='screenshots')
 	sent_by = models.ForeignKey(User)
 	
 	TYPE_SCORE = 1
@@ -295,6 +317,42 @@ class ClientDemo(models.Model):
 
 	def get_absolute_url(self):
 		return self.demo_file.url
+
+
+class OpponentClan(models.Model):
+	tag = models.CharField(max_length=11)
+	full_name = models.CharField(max_length=50)
+
+	def __unicode__(self):
+		return self.full_name
+
+
+class Player(models.Model):
+	nickname = models.CharField(max_length=15, unique=True)
+	user = models.OneToOneField(User, unique=True,
+		related_name='player', blank=True, null=True)
+
+	CLAN_QI = 1
+	CLAN_QI_DISPLAY = "Qi"
+	CLAN_KA = 2
+	CLAN_KA_DISPLAY = "Ka"
+	CLAN_NONE = 3
+	CLAN_NONE_DISPLAY = "-"
+	CLAN_CHOICES = (
+		(CLAN_QI, CLAN_QI_DISPLAY),
+		(CLAN_KA, CLAN_KA_DISPLAY),
+		(CLAN_NONE, CLAN_NONE_DISPLAY) # recruit?
+	)
+	clan = models.IntegerField(max_length=1, choices=CLAN_CHOICES)
+
+	def __unicode__(self):
+		return self.user if self.user else self.nickname
+
+
+class AdditionalNickname(models.Model):
+	nickname = models.CharField(max_length=15)
+	player = models.ForeignKey(Player, related_name='additional_nicks')
+
 
 
 class Server(models.Model):

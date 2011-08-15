@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Match archive - {{ block.super }}{% endblock title %}
+{% block content %}
+	<section class="content">
+		<table>
+			<thead>
+				<tr>
+					<th></th>
+					<th></th>
+					<th>Opponent</th>
+					<th>Result</th>
+					<th>Conditions</th>
+					<th>Date</th>
+				</tr>
+			</thead>
+			<tbody>
+			{% for match in matches %}
+				<tr>
+					<td></td>
+				</tr>
+			{% empty %}
+				<tr>
+					<td colspan="6">Sorry, no matches found.</td>
+				</tr>
+			{% endfor %}
+				<tr class="victory">
+					<td>Qi Teeworlds Clan</td>
+					<td>vs</td>
+					<td>Z-Team</td>
+					<td>1-0</td>
+					<td>4on4, ctf2</td>
+					<td>11 Sep</td>
+				</tr>
+			</tbody>
+		</table>
+	</section>
+{% endblock %}

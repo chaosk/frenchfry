@@ -18,7 +18,7 @@ a:hover {
 }
 
 header {
-	width: 700px;
+	width: 900px;
 	margin: 0 auto;
 }
 
@@ -91,14 +91,17 @@ nav a:hover {
 	color: #4fb7d1;
 }
 
-section.content {
-	background-color: #fff;
+section.content, #our_result, #opponent_result {
 	border: thin solid #ccc;
 	border-radius: 3px;
 	box-shadow: 0 1px 3px #ddd;
-	width: 640px;
+}
+
+section.content {
+	background-color: #fff;
+	width: 840px;
 	padding: 30px;
-	margin: 0 auto 30px;
+	margin: 0 auto 10px;
 	clear: both;
 }
 
@@ -152,40 +155,40 @@ section.content ol li p {
 	font-weight: normal;
 }
 
-section.stats {
+section {
 	overflow: hidden;
 }
 
-section.stats .box {
+section .box {
 	float: left;
 }
 
-section.stats.three .box {
+section.three .box {
 	width: 33.333%;
 }
 
-section.stats.four .box {
+section.four .box {
 	width: 25%;
 }
 
-section.stats dt {
+section dt {
 	color: #333;
 	border-left: 3px solid #4fb7d1;
 	border-bottom: 1px solid #4fb7d1;
 	font-family: Oswald, Impact, Haettenschweiler, "Franklin Gothic Bold", Charcoal, "Helvetica Inserat", "Bitstream Vera Sans Bold", "Arial Black", sans serif;
-	font-size: 3em;
+	font-size: 1.75em;
 	padding: 0 7px;
 	margin-right: 10px;
 }
 
-section.stats dd {
+section dd {
 	color: #666;
 	font-size: 0.8em;
 	text-transform: uppercase;
 	padding: 3px;
 }
 
-section.stats a {
+section a {
 	text-decoration: none;
 }
 
@@ -299,4 +302,87 @@ form .errorlist + p input {
 footer {
 	text-align: center;
 	margin-bottom: 20px;
+}
+
+#our_result, #opponent_result {
+	width: 25%;
+	text-align: center;
+	background-color: #fff;
+}
+
+#versus_block {
+	float: left;
+	width: 27%;
+	font-size: 4em;
+	text-align: center;
+}
+
+#our_result {
+	float: left;
+	margin: 0 10px 0 80px;
+}
+
+#opponent_result {
+	float: right;
+	margin: 0 80px 0 10px;
+}
+
+.clan_name {
+	font-size: 1.75em;
+	border-bottom: 1px solid #ccc;
+}
+
+.rounds_won {
+	background-color: #eee;
+	font-size: 5em;
+	font-family: "Play",  "Helvetica Inserat", "Bitstream Vera Sans Bold", "Arial Black", sans serif;
+}
+
+#match_result {
+	margin-bottom: 100px;
+}
+
+section.stats {
+	padding: 10px 30px;
+}
+
+.victory {
+	background-image: -webkit-gradient(linear, left top, left bottom, from(#ebf5e2), to(#fff));
+	background-image: -moz-linear-gradient(top, #ebf5e2,  #fff);
+	background-image: -o-gradient(#ebf5e2 , #fff);
+	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ebf5e2', endColorstr='#fff');
+}
+
+.victory #our_result .rounds_won {
+	background-image: -webkit-gradient(linear, left top, left bottom, from(#eee), to(#ebf5e2));
+	background-image: -moz-linear-gradient(top, #eee, #ebf5e2);
+	background-image: -o-gradient(#eee, #ebf5e2);
+	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#eee', endColorstr='#ebf5e2');
+}
+
+.game_info {
+	width: 60%;
+	float: left;
+}
+
+.game_assets {
+	width: 30%;
+	float: right;
+}
+
+.game_assets img {
+	max-width: 100%;
+}
+
+.screenshot, .demo {
+	margin: 1px;
+}
+
+.screenshot {
+	float: left;
+	max-width: 48%;
+}
+
+.screenshots, .demos {
+	clear: both;
 }

@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block title %}Match details - {{ block.super }}{% endblock title %}
+{% block content %}
+	<section class="content victory" id="match_summary">
+		<div id="match_result">
+			<div id="our_result">
+				<div class="clan_name">Qi</div>
+				<div class="rounds_won">4</div>
+			</div>
+			<div id="versus_block">
+				vs
+			</div>
+			<div id="opponent_result">
+				<div class="clan_name">Z-Team</div>
+				<div class="rounds_won">1</div>
+			</div>
+		</div>
+	</section>
+
+	<section class="content stats four">
+		<div id="match_info">
+			<div class="box">
+				<dt>1000</dt>
+				<dd>Score limit</dd>
+			</div>
+			<div class="box">
+				<dt>4on4</dt>
+				<dd>Player limit</dd>
+			</div>
+			<div class="box">
+				<dt>ctf2</dt>
+				<dd>Map</dd>
+			</div>
+			<div class="box">
+				<dt>15 Sep 2011</dt>
+				<dd>Played at</dd>
+			</div>
+		</div>
+	</section>
+
+	<section class="content game">
+		1st round
+		<div class="game_info">
+			<div class="game_result">
+				Qi
+				1042
+
+				Z
+				451
+			</div>
+			<div class="game_summary">
+				Duration: 12 minutes 04 seconds
+				Reported at: 19 Sep 2001 23:50
+			</div>
+			<div class="game_lineups">
+				<div class="our_lineup">
+					
+				</div>
+				<div class="opponent_lineup">
+					
+				</div>
+			</div>
+		</div>
+		<div class="game_assets">
+			<div class="screenshots">
+				<div class="screenshot">
+					<img src="http://img204.imageshack.us/img204/3705/37319865.png" alt="" />
+					<span class="screenshot_descritpion">Scoreboard</span>
+				</div>
+			</div>
+			<div class="demos">
+				<div class="demo">
+					Demo by Ubu
+				</div>
+				<div class="demo">
+					Demo by server
+				</div>
+
+			</div>
+		</div>
+	</section>
+{% endblock %}

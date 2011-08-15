@@ -156,6 +156,7 @@ TEMPLATE_DIRS = (
 
 PROJECT_APPS = (
 	'accounts',
+	'archive',
 )
 
 INSTALLED_APPS = (

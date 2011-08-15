@@ -16,6 +16,7 @@ v1_api.register(UserResource())
 urlpatterns = patterns('',
 	(r'^accounts/', include('accounts.urls')),
 	(r'^api/', include(v1_api.urls)),
+	(r'', include('archive.urls')),
 	url(r'^$', TemplateView.as_view(template_name="home.html"), name='home'),
 )
 
