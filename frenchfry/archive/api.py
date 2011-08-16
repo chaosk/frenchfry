@@ -37,7 +37,7 @@ class GameResource(ModelResource):
 				self.wrap_view('get_check'), name="api_get_check"),
 		]
 
-	def get_search(self, request, **kwargs):
+	def get_check(self, request, **kwargs):
 		self.method_check(request, allowed=['get'])
 		self.is_authenticated(request)
 		self.throttle_check(request)
